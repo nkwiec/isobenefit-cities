@@ -55,10 +55,10 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path_prefix, build
                            density_factors=density_factors)
 
     canvas = np.ones(shape=(size_x, size_y, 4))
-    update_map_snapshot(land, canvas)
-    save_snapshot(canvas, output_path=output_path, step=0)
+    #update_map_snapshot(land, canvas)
+    #save_snapshot(canvas, output_path=output_path, step=0)
     land.set_record_counts_header(output_path=output_path, urbanism_model=urbanism_model)
-    land.set_current_counts(urbanism_model)
+    #land.set_current_counts(urbanism_model)
     i = 0
     added_blocks, added_centralities = (0, 0)
     land.record_current_counts(output_path=output_path, iteration=i, added_blocks=added_blocks,
@@ -67,16 +67,17 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path_prefix, build
     while i <= n_steps and land.current_population <= land.max_population:
         start = time.time()
         added_blocks, added_centralities = land.update_map()
-        land.set_current_counts(urbanism_model)
+        #land.set_current_counts(urbanism_model)
         i += 1
         land.record_current_counts(output_path=output_path, iteration=i, added_blocks=added_blocks,
                                    added_centralities=added_centralities, urbanism_model=urbanism_model)
         LOGGER.info(f"step: {i}, duration: {time.time() - start} seconds")
         LOGGER.info(f"step: {i}, current population: {land.current_population} inhabitants")
-        update_map_snapshot(land, canvas)
-        save_snapshot(canvas, output_path=output_path, step=i)
+        if i == n_steps:
+            update_map_snapshot(land, canvas)
+            save_snapshot(canvas, output_path=output_path, step=i)
 
-    save_min_distances(land, output_path)
+    #save_min_distances(land, output_path)
 
     LOGGER.info(f"Simulation ended. Total duration: {time.time() - t_zero} seconds")
 
@@ -137,21 +138,25 @@ def initialize_land(size_x, size_y, build_probability, neighboring_centrality_pr
 
 
 def update_map_snapshot(land, canvas):
-    for row in land.map:
-        for block in row:
-            if block.is_nature:
-                color = (0 / 255, 158 / 255, 96 / 255)  # green
-            elif block.is_centrality:
-                color = np.ones(3)
-            else:
-                if block.is_built and block.density_level == 'high':
-                    color = np.zeros(3)
-                if block.is_built and block.density_level == 'medium':
-                    color = np.ones(3) / 3
-                if block.is_built and block.density_level == 'low':
-                    color = np.ones(3) * 2 / 3
+    for x in range(0, land.size_x):
+        for y in range(0, land.size_y):
+            color = (0 / 255, 158 / 255, 96 / 255)
+            canvas[x, y] = np.array([color[0], color[1], color[2], 1])
 
-            canvas[block.y, block.x] = np.array([color[0], color[1], color[2], 1])
+    for x, y in land.centralities:
+        color = np.ones(3)
+        canvas[x, y] = np.array([color[0], color[1], color[2], 1])
+
+    for x, y in land.houses:
+        if land.inhabitants[(x, y)]['density_level'] == 'high':
+            color = np.zeros(3)
+            canvas[x, y] = np.array([color[0], color[1], color[2], 1])
+        if land.inhabitants[(x, y)]['density_level'] == 'medium':
+            color = np.ones(3) / 3
+            canvas[x, y] = np.array([color[0], color[1], color[2], 1])
+        if land.inhabitants[(x, y)]['density_level'] == 'low':
+            color = np.ones(3) * 2 / 3
+            canvas[x, y] = np.array([color[0], color[1], color[2], 1])
 
 
 def save_snapshot(canvas, output_path, step, format='png'):
@@ -161,19 +166,18 @@ def save_snapshot(canvas, output_path, step, format='png'):
 
 
 def save_min_distances(land: Land, output_path):
-    land_array, population_array = land.get_map_as_array()
-    x_centr, y_centr = np.where(land_array == 2)
-    x_built, y_built = np.where(land_array == 1)
-    x_nature, y_nature = np.where(land_array == 0)
+    x_centr, y_centr = list(zip(*land.centralities.keys())) or [[], []]
+    x_built, y_built = list(zip(*land.houses.keys())) or [[], []]
+    x_nature, y_nature = list(zip(*land.nature_dict.keys()) or [[], []])
     distances_from_nature = np.sqrt(
-        (x_built[:, None] - x_nature) ** 2 + (y_built[:, None] - y_nature) ** 2).min(
+        (np.asarray(x_built)[:, None] - x_nature) ** 2 + (np.asarray(y_built)[:, None] - y_nature) ** 2).min(
         axis=1)
     distances_from_centr = np.sqrt(
-        (x_built[:, None] - x_centr) ** 2 + (y_built[:, None] - y_centr) ** 2).min(
+        (np.asarray(x_built)[:, None] - x_centr) ** 2 + (np.asarray(y_built)[:, None] - y_centr) ** 2).min(
         axis=1)
     distances_mapping_filepath = os.path.join(output_path, "minimal_distances_map.csv")
     array_of_data = np.concatenate(
-        [x_built.reshape(-1, 1), y_built.reshape(-1, 1), distances_from_nature.reshape(-1, 1),
+        [np.asarray(x_built).reshape(-1, 1), np.asarray(y_built).reshape(-1, 1), distances_from_nature.reshape(-1, 1),
          distances_from_centr.reshape(-1, 1)], axis=1)
     header = "X,Y,min_nature_dist, min_centr_dist"
     np.savetxt(fname=distances_mapping_filepath, X=array_of_data, delimiter=',', newline='\n', header=header)

@@ -121,4 +121,6 @@ if __name__ == "__main__":
                               isolated_centrality_probability=isolated_centrality_probability, T_star=T,
                               random_seed=random_seed, input_filepath=input_file_path,
                               initialization_mode=initialization_mode, max_population=max_population,
-                              max_ab_km2=max_ab_km2, urbanism_model=urbanism_model)
+                              max_ab_km2=max_ab_km2, urbanism_model=urbanism_model,
+                              prob_distribution=[0.7, 0.3, 0.0],
+                              density_factors=[1, 0.1, 0.01])
