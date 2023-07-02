@@ -11,8 +11,8 @@ class TestLand(TestCase):
         land.set_centralities(centralities=[MapBlock(5, 5)])
         for x in range(3, 8):
             for y in range(3, 8):
-                land.map[x][y].is_built = True
-                land.map[x][y].is_nature = False
+                land.map[x][y].built = True
+                land.map[x][y].nature = False
                 land.map[x][y].inhabitants = 10
         return land
 
@@ -28,7 +28,7 @@ class TestLand(TestCase):
         ok_land = self.get_land()
         ok_land.check_consistency()
 
-        ok_land.map[3][3].is_nature = True
+        ok_land.map[3][3].nature = True
         self.assertRaises(AssertionError, ok_land.check_consistency)
 
     def test_get_map_as_array(self):
@@ -42,14 +42,14 @@ class TestLand(TestCase):
 
     def test_set_centralities(self):
         land = Land(size_x=20, size_y=10)
-        self.assertFalse(land.map[5][5].is_built)
-        self.assertFalse(land.map[5][5].is_centrality)
-        self.assertTrue(land.map[5][5].is_nature)
+        self.assertFalse(land.map[5][5].built)
+        self.assertFalse(land.map[5][5].centrality)
+        self.assertTrue(land.map[5][5].nature)
 
         land.set_centralities(centralities=[MapBlock(5, 5)])
-        self.assertTrue(land.map[5][5].is_built)
-        self.assertTrue(land.map[5][5].is_centrality)
-        self.assertFalse(land.map[5][5].is_nature)
+        self.assertTrue(land.map[5][5].built)
+        self.assertTrue(land.map[5][5].centrality)
+        self.assertFalse(land.map[5][5].nature)
 
     def test_is_any_neighbor_built(self):
         land = self.get_land()
@@ -73,15 +73,15 @@ class TestLand(TestCase):
         land = Land(20, 20)
         for x in [5, 14]:
             for y in [5, 14]:
-                land.map[x][y].is_built = True
-                land.map[x][y].is_nature = False
+                land.map[x][y].built = True
+                land.map[x][y].nature = False
 
         self.assertTrue(land.nature_stays_extended(6, 14))
         self.assertFalse(land.nature_stays_extended(5, 10))
 
         for x in range(5, 14):
-            land.map[x][5].is_built = True
-            land.map[x][5].is_nature = False
+            land.map[x][5].built = True
+            land.map[x][5].nature = False
 
         self.assertTrue(land.nature_stays_extended(14, 6))
         self.assertFalse(land.nature_stays_extended(5, 10))
@@ -91,17 +91,17 @@ class TestLand(TestCase):
         self.assertTrue(land.nature_stays_reachable(9, 8))
         for i in range(3, 14):
             for j in range(3, 14):
-                land.map[i][j].is_built = True
-                land.map[i][j].is_nature = False
+                land.map[i][j].built = True
+                land.map[i][j].nature = False
         self.assertFalse(land.nature_stays_reachable(15, 14))
 
     def test_set_current_counts_isobenefit(self):
         land = Land(size_x=30, size_y=30)
         for i in range(10, 20):
             for j in range(10, 20):
-                land.map[i][j].is_built = True
-                land.map[i][j].is_nature = False
-        land.map[15][15].is_centrality = True
+                land.map[i][j].built = True
+                land.map[i][j].nature = False
+        land.map[15][15].centrality = True
         land.set_current_counts(urbanism_model='isobenefit')
         self.assertEqual((2 * 99 + 17) / 99, land.avg_dist_from_nature)
         self.assertAlmostEqual(3.891977374432388, land.avg_dist_from_centr, places=7)
@@ -112,12 +112,12 @@ class TestLand(TestCase):
         land = Land(size_x=30, size_y=30)
         for i in range(10, 21):
             for j in [10,15,20]:
-                land.map[i][j].is_built = True
-                land.map[i][j].is_nature = False
-                land.map[j][i].is_built = True
-                land.map[j][i].is_nature = False
+                land.map[i][j].built = True
+                land.map[i][j].nature = False
+                land.map[j][i].built = True
+                land.map[j][i].nature = False
 
-        land.map[15][15].is_centrality = True
+        land.map[15][15].centrality = True
         land.set_current_counts(urbanism_model='classical')
         self.assertAlmostEqual(1.7142857142857142, land.avg_dist_from_nature_wide, places=7)
         self.assertAlmostEqual(1., land.avg_dist_from_nature, places=7)
@@ -135,11 +135,11 @@ class TestLand(TestCase):
         expected_array = self.get_expected_array()
         expected_centralities = [(6, 6), (14, 6)]
         np.testing.assert_array_equal(array_map, expected_array)
-        assert land.map[0][0].is_built == False
-        assert land.map[0][0].is_nature == True
+        assert land.map[0][0].built == False
+        assert land.map[0][0].nature == True
 
         for x, y in expected_centralities:
-            assert land.map[x][y].is_centrality == True
+            assert land.map[x][y].centrality == True
 
     def test_logger(self):
         from src import logger

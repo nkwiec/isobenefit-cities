@@ -53,7 +53,7 @@ def create_arg_parser():
                         type=float,
                         default=1e-1,
                         help="probability of building a new centrality in a natural area")
-
+#1e-1
     parser.add_argument('--T',
                         required=False,
                         type=int,
@@ -94,6 +94,21 @@ def create_arg_parser():
                         default='isobenefit',
                         help="City urbanism model. Choose one of 'isobenefit' and 'standard'")
 
+    parser.add_argument('--prob_distribution', nargs='+', type=float, default=[0.6, 0.3, 0.1],
+                        help="sets the distribution probability")
+
+    """parser.add_argument('--prob_distribution',
+                        required=False,
+                        type=str,
+                        default='(0.1, 0.4, 0.5)',
+                        help="sets the distribution probability")
+
+    parser.add_argument('--density_factors',
+                        required=False,
+                        type=str,
+                        default='(1, 0.1, 0.01)',
+                        help="sets the density factors")"""
+
     return parser
 
 
@@ -121,4 +136,4 @@ if __name__ == "__main__":
                               isolated_centrality_probability=isolated_centrality_probability, T_star=T,
                               random_seed=random_seed, input_filepath=input_file_path,
                               initialization_mode=initialization_mode, max_population=max_population,
-                              max_ab_km2=max_ab_km2, urbanism_model=urbanism_model)
+                              max_ab_km2=max_ab_km2, urbanism_model=urbanism_model, prob_distribution=[0.5, 0.3, 0.2], density_factors=[1, 0.1, 0.01])

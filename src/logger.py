@@ -32,7 +32,7 @@ LOGGING = {
     },
     'loggers': {
         'isobenefit-cities': {
-            'handlers': ['console', 'general_file'],
+            'handlers': ['console'], #, 'general_file'],
             'level': 'DEBUG',
         }
     }

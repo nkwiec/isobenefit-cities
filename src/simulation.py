@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import logging
 
 import numpy as np
 
@@ -18,7 +19,7 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path_prefix, build
                               random_seed,
                               input_filepath, initialization_mode, max_population, max_ab_km2, urbanism_model,
                               prob_distribution, density_factors):
-    logger.configure_logging()
+    logger.configure_logging(True)
     LOGGER = logger.get_logger()
     np.random.seed(random_seed)
 
@@ -61,9 +62,10 @@ def run_isobenefit_simulation(size_x, size_y, n_steps, output_path_prefix, build
     land.set_current_counts(urbanism_model)
     i = 0
     added_blocks, added_centralities = (0, 0)
+    LOGGER.info('before record_current_counts')
     land.record_current_counts(output_path=output_path, iteration=i, added_blocks=added_blocks,
                                added_centralities=added_centralities, urbanism_model=urbanism_model)
-
+    LOGGER.info('after record_current_counts')
     while i <= n_steps and land.current_population <= land.max_population:
         start = time.time()
         added_blocks, added_centralities = land.update_map()
@@ -104,7 +106,7 @@ def initialize_land(size_x, size_y, build_probability, neighboring_centrality_pr
                     amenities_list, urbanism_model, prob_distribution, density_factors):
     assert size_x > 2 * T and size_y > 2 * T, f"size of the map is too small: {size_x}x{size_y}. Dimensions should be larger than {2 * T}"
     assert sum(
-        prob_distribution) == 1, f"pobability distribution does not sum-up to 1: sum{prob_distribution} = {sum(prob_distribution)}."
+        prob_distribution) == 1, f"probability distribution does not sum-up to 1: sum{prob_distribution} = {sum(prob_distribution)}."
     assert density_factors[0] >= density_factors[1] >= density_factors[
         2], f"density factors are not decreasing in value: {density_factors}."
 
@@ -139,17 +141,29 @@ def initialize_land(size_x, size_y, build_probability, neighboring_centrality_pr
 def update_map_snapshot(land, canvas):
     for row in land.map:
         for block in row:
-            if block.is_nature:
-                color = (0 / 255, 158 / 255, 96 / 255)  # green
-            elif block.is_centrality:
-                color = np.ones(3)
-            else:
-                if block.is_built and block.density_level == 'high':
+            if block.is_centrality():
+                color = np.ones(3)  # white
+            elif block.is_buildable_nature():
+                color = (129 / 255, 171 / 255, 99 / 255)  # green
+              #  LOGGER.warning('This is a warning logxxx.')
+            elif block.is_not_buildable_nature():
+                color = (173 / 255, 204 / 255, 115 / 255)  # light green
+
+            elif block.is_not_buildable():
+                color = (224 / 255, 156 / 255, 56 / 255)  # dark yellow
+            elif block.is_built():
+                color = (220 / 255, 91 / 255, 209 / 255)  # magenta
+
+                if block.density_level == 'high':
                     color = np.zeros(3)
-                if block.is_built and block.density_level == 'medium':
+                elif block.density_level == 'medium':
                     color = np.ones(3) / 3
-                if block.is_built and block.density_level == 'low':
+                elif block.density_level == 'low':
                     color = np.ones(3) * 2 / 3
+
+            else:
+                print(repr(block))
+                raise 'this should not happen'
 
             canvas[block.y, block.x] = np.array([color[0], color[1], color[2], 1])
 
@@ -177,3 +191,10 @@ def save_min_distances(land: Land, output_path):
          distances_from_centr.reshape(-1, 1)], axis=1)
     header = "X,Y,min_nature_dist, min_centr_dist"
     np.savetxt(fname=distances_mapping_filepath, X=array_of_data, delimiter=',', newline='\n', header=header)
+
+#distances from nature and centre= the minimum distance between built points and nature/centralities
+
+#import os
+
+#current_path = os.getcwd()
+#print("Current working directory:", current_path)
