@@ -253,7 +253,7 @@ class Land:
 
                 if array_map[x, y] == 0:
                     self.houses[(x, y)] = True
-                    self.nature.pop((x, y))
+                    self.nature_dict.pop((x, y))
                     # TODO compute excluded nature
                     # self.map[x][y].is_built = True
                     # self.map[x][y].is_centrality = False
